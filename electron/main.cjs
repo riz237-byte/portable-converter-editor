@@ -130,7 +130,7 @@ ipcMain.handle('youtube:download', async (event, { url, format }) => {
   const deno = helperExecutable('deno.exe')
   if (!fs.existsSync(downloader) || !fs.existsSync(deno)) throw new Error('Manca un componente per il download. Reinstalla l’ultima versione dell’app.')
   const template = path.join(directory.filePaths[0], '%(title).180B [%(id)s].%(ext)s')
-  const args = ['--no-playlist','--newline','--progress','--remote-components','ejs:github','--js-runtimes',`deno:${deno}`,'-P',directory.filePaths[0],'-o',template]
+  const args = ['--no-playlist','--newline','--progress','--remote-components','ejs:github','--js-runtimes',`deno:${deno}`,'--ffmpeg-location',ffmpegExecutable(),'-P',directory.filePaths[0],'-o',template]
   if (format === 'audio') args.push('-f','ba/b','-x','--audio-format','mp3','--audio-quality','0')
   else args.push('-f','bv*[ext=mp4]+ba[ext=m4a]/b[ext=mp4]/best','--merge-output-format','mp4')
   args.push('--', parsed.href)
@@ -159,3 +159,4 @@ ipcMain.handle('youtube:download', async (event, { url, format }) => {
 
 app.whenReady().then(createWindow)
 app.on('window-all-closed', () => { if (process.platform !== 'darwin') app.quit() })
+
