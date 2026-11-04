@@ -15,7 +15,7 @@ L'installer `.exe` viene creato nella cartella `release`.
 
 ## Generare un download da GitHub
 
-Il workflow `.github/workflows/release.yml` compila l'app e allega l'installer alle GitHub Releases quando viene pubblicato un tag versione, ad esempio `v1.0.0`. Dopo la pubblicazione, chiunque potrà scaricare il file `.exe` dalla pagina **Releases** del repository.
+Il workflow `.github/workflows/release.yml` compila l'app e pubblica automaticamente l'installer Windows in una GitHub Release a ogni aggiornamento del branch `main`. Il download si trova nella pagina **Releases** del repository.
 
 L'installer è per Windows 64 bit; la firma digitale non è configurata, quindi Windows potrebbe mostrare l'avviso standard per applicazioni non firmate.
 
