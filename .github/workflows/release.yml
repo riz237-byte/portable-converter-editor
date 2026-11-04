@@ -1,8 +1,7 @@
 name: Build Windows installer
 on:
   push:
-    tags:
-      - 'v*'
+    branches: [main]
 permissions:
   contents: write
 jobs:
@@ -17,6 +16,8 @@ jobs:
       - run: npm run dist:win
       - uses: softprops/action-gh-release@v2
         with:
+          tag_name: v1.0.${{ github.run_number }}
+          name: Frame FFmpeg Studio v1.0.${{ github.run_number }}
+          target_commitish: main
           files: release/*.exe
           generate_release_notes: true
-
