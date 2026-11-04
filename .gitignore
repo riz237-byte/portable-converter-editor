@@ -3,5 +3,6 @@ dist/
 release/
 .cache/
 work/temp/
+resources/yt-dlp.exe
+resources/deno.exe
 .DS_Store
-

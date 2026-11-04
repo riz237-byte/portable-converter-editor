@@ -36,6 +36,10 @@
       "electron/**/*",
       "package.json"
     ],
+    "extraResources": [
+      { "from": "resources/yt-dlp.exe", "to": "yt-dlp.exe" },
+      { "from": "resources/deno.exe", "to": "deno.exe" }
+    ],
     "directories": {
       "output": "release"
     },
@@ -54,4 +58,3 @@
     "ffmpeg-static@5.3.0": true
   }
 }
-

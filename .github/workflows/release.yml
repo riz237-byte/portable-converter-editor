@@ -1,7 +1,8 @@
 name: Build Windows installer
 on:
   push:
-    branches: [main]
+    branches:
+      - main
 permissions:
   contents: write
 jobs:
@@ -12,12 +13,20 @@ jobs:
       - uses: actions/setup-node@v4
         with:
           node-version: 24
+      - name: Prepare YouTube download components
+        shell: pwsh
+        run: |
+          New-Item -ItemType Directory -Force resources | Out-Null
+          Invoke-WebRequest -Uri 'https://github.com/yt-dlp/yt-dlp/releases/latest/download/yt-dlp.exe' -OutFile 'resources/yt-dlp.exe'
+          Invoke-WebRequest -Uri 'https://github.com/denoland/deno/releases/latest/download/deno-x86_64-pc-windows-msvc.zip' -OutFile 'deno-runtime.zip'
+          Expand-Archive -Path 'deno-runtime.zip' -DestinationPath 'deno-runtime' -Force
+          Copy-Item -LiteralPath 'deno-runtime/deno.exe' -Destination 'resources/deno.exe'
       - run: npm install
       - run: npm run dist:win
       - uses: softprops/action-gh-release@v2
         with:
-          tag_name: v1.0.${{ github.run_number }}
-          name: Frame FFmpeg Studio v1.0.${{ github.run_number }}
+          tag_name: v1.1.${{ github.run_number }}
+          name: Frame FFmpeg Studio 1.1.${{ github.run_number }}
           target_commitish: main
           files: release/*.exe
           generate_release_notes: true
