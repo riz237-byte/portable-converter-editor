@@ -1,13 +1,13 @@
 import React, { useEffect, useState } from 'react'
 import { createRoot } from 'react-dom/client'
-import { AudioLines, Check, ChevronDown, Clapperboard, Download, FileAudio2, FileVideo2, Film, FolderOpen, Gauge, LoaderCircle, Music2, Play, Scissors, Settings2, Sparkles, X } from 'lucide-react'
+import { AudioLines, Check, ChevronDown, CircleHelp, Clock3, FileAudio2, FileVideo2, Film, FolderOpen, HardDrive, LoaderCircle, Music2, Play, Plus, Scissors, Settings2, SlidersHorizontal, X } from 'lucide-react'
 import './style.css'
 
 const tasks = [
-  { id: 'convert', title: 'Converti', icon: AudioLines, hint: 'Cambia formato audio o video' },
-  { id: 'trim', title: 'Taglia', icon: Scissors, hint: 'Seleziona un intervallo preciso' },
-  { id: 'audio', title: 'Estrai audio', icon: Music2, hint: 'Salva la traccia audio' },
-  { id: 'custom', title: 'FFmpeg', icon: Settings2, hint: 'Personalizza le opzioni' },
+  { id: 'convert', title: 'Converti', detail: 'Formato e codec', icon: AudioLines },
+  { id: 'trim', title: 'Taglia', detail: 'Intervallo clip', icon: Scissors },
+  { id: 'audio', title: 'Estrai audio', detail: 'Traccia audio', icon: Music2 },
+  { id: 'custom', title: 'Opzioni FFmpeg', detail: 'Comando personalizzato', icon: Settings2 },
 ]
 const videoFormats = ['mp4', 'webm', 'mov', 'mkv', 'gif']
 const audioFormats = ['mp3', 'wav', 'aac', 'ogg', 'flac', 'm4a']
@@ -21,7 +21,7 @@ function App() {
   const [options, setOptions] = useState('-vf scale=1280:-1 -crf 28')
   const [busy, setBusy] = useState(false)
   const [progress, setProgress] = useState(0)
-  const [status, setStatus] = useState('Pronto per lavorare offline')
+  const [status, setStatus] = useState('In attesa di un file')
   const [error, setError] = useState('')
   const [complete, setComplete] = useState(false)
   const isVideo = file && /\.(mp4|mov|mkv|webm|avi|mpeg|mpg)$/i.test(file.name)
@@ -33,7 +33,7 @@ function App() {
     if (!selected) return
     setFile(selected); setError(''); setComplete(false); setProgress(0); setEnd('00:00:15')
     setFormat(/\.(mp3|wav|aac|ogg|flac|m4a|wma)$/i.test(selected.name) ? 'mp3' : 'mp4')
-    setTask('convert')
+    setTask('convert'); setStatus('File pronto per la conversione')
   }
 
   async function run() {
@@ -45,31 +45,63 @@ function App() {
       if (!outputPath) { setStatus('Operazione annullata'); return }
       setStatus('FFmpeg sta elaborando il file…')
       await window.frameDesktop.run({ inputPath: file.path, outputPath, task, format: outputFormat, start, end, options })
-      setComplete(true); setStatus('Operazione completata')
+      setComplete(true); setStatus('Conversione completata')
     } catch (e) { setError(e?.message || 'Operazione non riuscita. Controlla il file e riprova.'); setStatus('Operazione non riuscita') }
     finally { setBusy(false) }
   }
 
   const selectedTask = tasks.find((item) => item.id === task)
   const formats = isVideo ? videoFormats : audioFormats
+  const FileIcon = isVideo ? FileVideo2 : FileAudio2
   return <main className="app-shell">
-    <header className="topbar"><a className="brand" href="#"><span className="brand-mark"><Film size={19}/></span><span>frame<span className="brand-dot">.</span></span></a><div className="top-note"><span className="status-dot online"/> Applicazione desktop · Elaborazione locale</div><span className="offline-chip">OFFLINE</span></header>
-    <section className="hero"><div className="eyebrow"><Sparkles size={14}/> IL TUO STUDIO MULTIMEDIALE</div><h1>Il controllo creativo,<br/><span>in ogni fotogramma.</span></h1><p>Converti, taglia e trasforma i tuoi file con FFmpeg.<br className="desktop"/> Tutto sul tuo computer, anche senza internet.</p></section>
-    <section className="workspace">
-      <aside className="sidebar"><div className="side-label">STRUMENTI</div>{tasks.map((item)=><button key={item.id} className={`task-link ${task===item.id?'active':''}`} onClick={()=>setTask(item.id)}><span className="task-icon"><item.icon size={18}/></span><span className="task-copy"><b>{item.title}</b><small>{item.hint}</small></span>{task===item.id&&<span className="active-mark"/>}</button>)}<div className="privacy-card"><span className="privacy-icon"><Check size={15}/></span><div><b>I tuoi file restano tuoi</b><p>FFmpeg elabora tutto sul PC. Nessun caricamento online.</p></div></div></aside>
-      <div className="editor"><div className="editor-heading"><div><div className="eyebrow muted">AREA DI LAVORO</div><h2>{selectedTask?.title}</h2><p>{selectedTask?.hint}</p></div><span className="engine-chip"><span className="status-dot online"/> FFmpeg incluso</span></div>
-        {!file ? <button className="dropzone" onClick={chooseFile}><span className="upload-icon"><FolderOpen size={23}/></span><b>Scegli un file dal computer</b><span>Apri un file audio o video da convertire</span><small><FileVideo2 size={14}/> Video <i/> <FileAudio2 size={14}/> Audio <i/> Nessun upload</small></button> : <div className="file-card">{isVideo?<FileVideo2 size={21}/>:<FileAudio2 size={21}/>}<div className="file-info"><b>{file.name}</b><small>{(file.size/1048576).toFixed(1)} MB · {isVideo?'Video':'Audio'}</small></div><button className="icon-button" aria-label="Rimuovi file" onClick={()=>{setFile(null);setComplete(false);setError('')}}><X size={18}/></button></div>}
-        {file&&<><div className="settings-panel">
-          {(task==='convert'||task==='custom')&&<div className="field-row"><label>Formato di uscita</label><div className="format-wrap"><select value={format} onChange={(e)=>setFormat(e.target.value)}>{formats.map((f)=><option key={f} value={f}>{f.toUpperCase()}</option>)}{isVideo&&<optgroup label="Solo audio">{audioFormats.map((f)=><option key={f} value={f}>{f.toUpperCase()} · audio</option>)}</optgroup>}</select><ChevronDown size={16}/></div><span className="field-hint">{format.toUpperCase()}</span></div>}
-          {task==='trim'&&<div className="field-row trim-row"><label>Intervallo clip</label><div className="time-fields"><label>DA<input value={start} onChange={(e)=>setStart(e.target.value)} placeholder="00:00:00"/></label><span className="range-dash">—</span><label>A<input value={end} onChange={(e)=>setEnd(e.target.value)} placeholder="00:00:15"/></label></div><span className="field-hint">hh:mm:ss</span></div>}
-          {task==='audio'&&<div className="info-row"><span className="mini-icon"><Music2 size={16}/></span><div><b>Estrazione audio</b><small>Formato MP3 · bitrate 192 kb/s</small></div><span className="field-hint">AUDIO</span></div>}
-          {task==='custom'&&<div className="custom-field"><label>Opzioni FFmpeg</label><textarea value={options} onChange={(e)=>setOptions(e.target.value)} spellCheck="false"/><small>Scrivi opzioni come <code>-vf scale=1280:-1 -crf 28</code>. Input e salvataggio sono gestiti dall’app.</small></div>}
-        </div><div className="action-row"><button className="secondary-button" disabled={busy} onClick={chooseFile}><FolderOpen size={16}/> Cambia file</button><button className="primary-button" disabled={busy} onClick={run}>{busy?<><LoaderCircle className="spin" size={17}/> {progress>0?`${progress}%`:'Avvio…'}</>:complete?<><Check size={16}/> Converti di nuovo</>:<><Play size={16} fill="currentColor"/> Avvia elaborazione</>}</button></div>
-          {busy&&<div className="progress-wrap"><div className="progress-track"><span style={{width:`${progress}%`}}/></div><small>{status}</small><button className="cancel-button" onClick={()=>window.frameDesktop.cancel()}>Annulla</button></div>}{error&&<div className="error-box">{error}</div>}{complete&&<div className="success-box"><span className="result-check"><Check size={18}/></span><span><b>File pronto e salvato</b><small>Trovi il risultato nella cartella scelta.</small></span><Download size={17}/></div>}
-        </>}
-        {!file&&<div className="tips"><div><span className="tip-icon"><Gauge size={16}/></span><span><b>Funziona offline</b><small>FFmpeg è incluso nell’applicazione.</small></span></div><div><span className="tip-icon"><Clapperboard size={16}/></span><span><b>Qualità sotto controllo</b><small>Impostazioni semplici o opzioni FFmpeg.</small></span></div></div>}
-      </div>
-    </section><footer><span>FRAME STUDIO <span className="brand-dot">·</span> FFmpeg PER WINDOWS</span><span>Nessuna connessione internet necessaria.</span></footer>
+    <header className="app-titlebar">
+      <div className="brand"><span className="brand-mark"><Film size={16}/></span><span className="brand-name">Frame</span><span className="brand-divider"/><span className="brand-product">FFmpeg Studio</span></div>
+      <div className="titlebar-project">Nuova conversione</div>
+      <div className="titlebar-actions"><span className="local-status"><span className="status-dot"/> Offline</span><button className="titlebar-button" aria-label="Informazioni"><CircleHelp size={15}/></button></div>
+    </header>
+
+    <div className="app-layout">
+      <aside className="sidebar">
+        <div className="side-heading">WORKSPACE</div>
+        <button className="nav-item nav-selected"><span className="nav-icon"><Film size={16}/></span><span>Conversione</span><span className="nav-chevron">›</span></button>
+        <div className="side-heading mode-heading">STRUMENTI</div>
+        <nav className="task-nav" aria-label="Strumenti di conversione">
+          {tasks.map((item) => <button key={item.id} className={`task-item ${task===item.id?'task-selected':''}`} onClick={()=>setTask(item.id)}><span className="nav-icon"><item.icon size={16}/></span><span className="task-label"><b>{item.title}</b><small>{item.detail}</small></span>{task===item.id&&<span className="task-indicator"/>}</button>)}
+        </nav>
+        <div className="sidebar-bottom"><span className="engine-dot"/><div><b>FFmpeg pronto</b><small>Elaborazione locale</small></div><Settings2 size={14}/></div>
+      </aside>
+
+      <section className="main-view">
+        <header className="view-heading"><div><div className="breadcrumb">WORKSPACE <span>/</span> {selectedTask?.title.toUpperCase()}</div><h1>{selectedTask?.title}</h1><p>Seleziona la sorgente e imposta le opzioni di output.</p></div><div className="view-tools"><span className="build-tag">DESKTOP · WINDOWS</span></div></header>
+
+        <div className="work-grid">
+          <section className="source-panel">
+            <div className="panel-heading"><div><h2>Sorgente</h2><p>File audio o video da elaborare</p></div><button className="subtle-button" onClick={chooseFile}><Plus size={14}/>{file?'Cambia file':'Aggiungi file'}</button></div>
+            {!file ? <button className="source-drop" onClick={chooseFile}><span className="drop-glyph"><FolderOpen size={20}/></span><b>Apri un file multimediale</b><small>Seleziona un file dal computer</small><span className="drop-formats"><FileVideo2 size={13}/> MP4, MOV, MKV, WEBM <i/> <FileAudio2 size={13}/> MP3, WAV, FLAC</span></button> : <div className="media-card"><span className="media-type"><FileIcon size={19}/></span><div className="media-details"><b title={file.name}>{file.name}</b><div><span>{isVideo?'Video':'Audio'}</span><i/>{(file.size/1048576).toFixed(1)} MB</div></div><button className="remove-file" aria-label="Rimuovi file" onClick={()=>{setFile(null);setComplete(false);setError('');setStatus('In attesa di un file')}}><X size={16}/></button></div>}
+
+            <div className="source-meta"><div className="meta-heading"><span>DETTAGLI</span>{file&&<span className="ready-badge"><Check size={11}/> SORGENTE PRONTA</span>}</div><div className="meta-row"><span><HardDrive size={13}/> Percorso</span><b>{file?file.path:'Nessun file selezionato'}</b></div><div className="meta-row"><span><Clock3 size={13}/> Stato</span><b className={complete?'text-green':''}>{status}</b></div></div>
+
+            {error&&<div className="error-box">{error}</div>}
+            {complete&&<div className="success-box"><span className="success-icon"><Check size={14}/></span><span><b>Conversione completata</b><small>Il risultato è stato salvato nella cartella scelta.</small></span></div>}
+            {busy&&<div className="progress-box"><div className="progress-top"><span>ELABORAZIONE</span><b>{progress>0?`${progress}%`:'Avvio…'}</b></div><div className="progress-track"><span style={{width:`${progress}%`}}/></div><button onClick={()=>window.frameDesktop.cancel()}>Annulla operazione</button></div>}
+            {!file&&<div className="privacy-note"><span className="privacy-check"><Check size={12}/></span><span>I file non lasciano il computer. L’app funziona senza connessione.</span></div>}
+          </section>
+
+          <aside className="settings-panel">
+            <div className="panel-heading settings-heading"><div><h2>Impostazioni</h2><p>Configura il risultato</p></div><SlidersHorizontal size={16}/></div>
+            {(task==='convert'||task==='custom')&&<div className="setting-field"><label htmlFor="output-format">Formato di output</label><div className="select-control"><select id="output-format" value={format} onChange={(e)=>setFormat(e.target.value)}>{formats.map((f)=><option key={f} value={f}>{f.toUpperCase()}</option>)}{isVideo&&<optgroup label="Solo audio">{audioFormats.map((f)=><option key={f} value={f}>{f.toUpperCase()} · audio</option>)}</optgroup>}</select><ChevronDown size={14}/></div><small>Il codec viene scelto automaticamente in base al formato.</small></div>}
+            {task==='trim'&&<div className="setting-field"><label>Intervallo clip</label><div className="range-fields"><div><span>INIZIO</span><input value={start} onChange={(e)=>setStart(e.target.value)} placeholder="00:00:00"/></div><span className="range-divider">→</span><div><span>FINE</span><input value={end} onChange={(e)=>setEnd(e.target.value)} placeholder="00:00:15"/></div></div><small>Formato orario: ore:minuti:secondi.</small></div>}
+            {task==='audio'&&<div className="output-info"><span className="output-icon"><Music2 size={15}/></span><div><b>Estrai traccia audio</b><small>MP3 · 192 kb/s</small></div><span className="format-pill">MP3</span></div>}
+            {task==='custom'&&<div className="setting-field custom-options"><label htmlFor="ffmpeg-options">Opzioni FFmpeg</label><textarea id="ffmpeg-options" value={options} onChange={(e)=>setOptions(e.target.value)} spellCheck="false"/><small>Es. <code>-vf scale=1280:-1 -crf 28</code>. Input e percorso di output sono gestiti dall’app.</small></div>}
+            <div className="settings-separator"/>
+            <div className="output-location"><span className="folder-icon"><FolderOpen size={14}/></span><div><b>Destinazione</b><small>La scegli dopo aver avviato l’elaborazione</small></div></div>
+            <div className="settings-footer"><div className="privacy-inline"><span className="status-dot"/> FFmpeg locale</div><button className="run-button" disabled={!file||busy} onClick={run}>{busy?<><LoaderCircle className="spin" size={15}/>Elaborazione</>:complete?<><Check size={15}/>Converti di nuovo</>:<><Play size={14} fill="currentColor"/>Avvia</>}</button></div>
+          </aside>
+        </div>
+
+        <footer className="statusbar"><div><span className="status-dot"/> {status}</div><div>FFmpeg <span className="statusbar-separator">·</span> {file?`${(file.size/1048576).toFixed(1)} MB`:'Pronto'}</div></footer>
+      </section>
+    </div>
   </main>
 }
 
