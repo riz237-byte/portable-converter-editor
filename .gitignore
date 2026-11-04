@@ -1,0 +1,7 @@
+node_modules/
+dist/
+release/
+.cache/
+work/temp/
+.DS_Store
+
